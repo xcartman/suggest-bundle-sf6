@@ -1,5 +1,5 @@
 {
-    "name": "sirian/suggest-bundle",
+    "name": "xcartman/suggest-bundle",
     "type": "library",
     "license": "MIT",
     "description": "symfony2 suggest (autocomplete) bundle",
