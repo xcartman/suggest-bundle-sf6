@@ -1,0 +1,122 @@
+{% block suggest_widget %}
+    {{ block('suggest_widget_' ~ widget) }}
+{% endblock %}
+
+{% block suggest_widget_select2_v4 %}
+    {% if multiple %}
+        {% set full_name = full_name ~ '[]' %}
+    {% endif %}
+    <select {{ block('widget_attributes') }}{% if multiple %} multiple="multiple"{% endif %}>
+        {% for item in values %}
+            <option selected="selected" value="{{ item.id }}">{{ item.text }}</option>
+        {% endfor %}
+    </select>
+
+    <script type="text/javascript">
+        (function ($) {
+            var $input = $('#{{ id }}');
+
+            var options = {
+                allowClear: !$input.prop('required'),
+                placeholder: '{{ attr.placeholder|default('Search') }}',
+                multiple: {{ multiple ? 'true' : 'false' }},
+                closeOnSelect: {{ multiple ? 0 : 1 }},
+                data: {{ values|json_encode|raw }},
+                ajax: {
+                    url: '{{ path('sirian_suggest', {name: alias}) }}',
+                    dataType: 'json',
+                    data: function (params) {
+                        return {
+                            q: params.term,
+                            page: params.page,
+                            extra: {{ extra|default({})|json_encode|raw }}
+                        }
+                    },
+                    processResults: function (data, page) {
+                        return {
+                            results: data.items,
+                            pagination: {
+                                more: data.hasMore
+                            }
+                        }
+                    }
+                }
+            };
+
+            $input.data('suggest-options', options);
+
+            setTimeout(function () {
+                $input.select2($input.data('suggest-options'));
+                {% if ids %}
+                $input.val({{ (multiple ? ids : ids[0])|json_encode|raw }}).trigger('change');
+                {% endif %}
+            }, 0);
+        }(jQuery));
+    </script>
+
+{% endblock %}
+
+{% block suggest_widget_select2_v3 %}
+<input type="text" {{ block('widget_attributes') }} value="{{ ids|join(',') }}">
+
+<script type="text/javascript">
+    (function ($) {
+        var $input = $('#{{ id }}');
+        var initialized = false;
+        var options = {
+            allowClear: !$input.prop('required'),
+            placeholder: '{{ attr.placeholder|default('Search') }}',
+            multiple: {{ multiple ? 'true' : 'false' }},
+            closeOnSelect: {{ multiple ? 0 : 1 }},
+            ajax: {
+                url: '{{ path('sirian_suggest', {name: alias}) }}',
+                dataType: 'json',
+                data: function (term, page) {
+                    return {
+                        q: term,
+                        page: page,
+                        extra: {{ extra|default({})|json_encode|raw }}
+                    }
+                },
+                results: function (data, page) {
+                    return {
+                        results: data.items,
+                        more: data.hasMore
+                    }
+                }
+            },
+            initSelection: function (element, callback) {
+                {% if value %}
+                    if (!initialized) {
+                        callback({{ value|json_encode|raw }});
+                        initialized = true;
+                        return;
+                    }
+                {% endif %}
+
+                var ids = element.val();
+                {% if multiple %}
+                    ids = ids.split(',');
+                {% endif %}
+
+                $.ajax({
+                    url: '{{ path('sirian_suggest_init', {name: alias}) }}',
+                    data: {
+                        ids: ids
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        callback({% if multiple %}data{% else %}data[0]{% endif %})
+                    }
+                });
+            }
+        };
+
+        $input.data('suggest-options', options);
+
+        setTimeout(function () {
+            $input.select2($input.data('suggest-options'));
+        }, 0);
+    }(jQuery));
+</script>
+{% endblock %}

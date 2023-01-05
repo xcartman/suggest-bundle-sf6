@@ -1,0 +1,9 @@
+sirian_suggest:
+    path:  /{name}/suggest
+    defaults:
+        _controller: sirian_suggest.controller::suggest
+
+sirian_suggest_init:
+    path:  /{name}/init
+    defaults:
+        _controller: sirian_suggest.controller::suggest
